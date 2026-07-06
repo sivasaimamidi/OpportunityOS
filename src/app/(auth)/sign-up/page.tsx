@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff, AlertCircle, Copy } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
 import { useAuthStore } from '@/providers/store-provider';
@@ -12,13 +12,29 @@ import { toast } from 'sonner';
 export default function SignUpPage() {
   const router = useRouter();
   const registerUser = useAuthStore((s) => s.registerUser);
+  const signInUser = useAuthStore((s) => s.signInUser);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | 'duplicate' | null>(null);
+
+  const handleDuplicateAccount = () => {
+    setErrorMessage('');
+    setLoadingProvider('duplicate');
+    toast.info('Creating duplicate demo account...');
+
+    setTimeout(() => {
+      const demoEmail = `demo.${Date.now()}@opportunityos.ai`;
+      registerUser({ name: 'Demo Student', email: demoEmail, password: 'demo123', provider: 'email' });
+      signInUser({ email: demoEmail, password: 'demo123', provider: 'email' });
+      setLoadingProvider(null);
+      toast.success('Logged in with Duplicate Account!');
+      router.push(ROUTES.dashboard);
+    }, 800);
+  };
 
   const handleSocialAuth = (provider: 'google' | 'github') => {
     setErrorMessage('');
@@ -67,7 +83,7 @@ export default function SignUpPage() {
 
   return (
     <GlassCard className="p-8 border-indigo-500/30 bg-slate-900/90 backdrop-blur-2xl">
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-0.5 mb-4 shadow-lg shadow-indigo-500/30">
           <div className="h-full w-full bg-slate-950 rounded-[14px] flex items-center justify-center">
             <Sparkles className="h-6 w-6 text-indigo-400" />
@@ -75,6 +91,24 @@ export default function SignUpPage() {
         </div>
         <h1 className="text-2xl font-bold text-white font-heading">Create your Account</h1>
         <p className="text-xs text-slate-400 mt-1">Sign up first to get access to {APP_NAME} AI</p>
+      </div>
+
+      {/* Duplicate Account Instant Button */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={handleDuplicateAccount}
+          disabled={loadingProvider !== null}
+          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600/30 via-purple-600/30 to-pink-600/30 border border-indigo-500/40 text-white text-sm font-semibold hover:border-indigo-400 hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/10 group disabled:opacity-50"
+        >
+          {loadingProvider === 'duplicate' ? (
+            <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+          ) : (
+            <Copy className="h-4 w-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+          )}
+          {loadingProvider === 'duplicate' ? 'Loading Duplicate Account...' : 'Explore with Duplicate Account'}
+        </button>
+        <p className="text-[11px] text-slate-500 text-center mt-1.5">Instant 1-click preview — skips registration</p>
       </div>
 
       <div className="space-y-3 mb-6">
