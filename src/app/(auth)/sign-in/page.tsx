@@ -3,18 +3,39 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Code, Mail, Lock } from 'lucide-react';
+import { Sparkles, ArrowRight, Code, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
+import { toast } from 'sonner';
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | null>(null);
+
+  const handleSocialAuth = (provider: 'google' | 'github') => {
+    setLoadingProvider(provider);
+    toast.info(`Authenticating with ${provider === 'google' ? 'Google' : 'GitHub'}...`);
+
+    setTimeout(() => {
+      toast.success(`Welcome back! Logged in with ${provider === 'google' ? 'Google' : 'GitHub'}.`);
+      router.push(ROUTES.dashboard);
+    }, 1200);
+  };
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(ROUTES.dashboard);
+    if (!email || !password) return;
+
+    setLoadingProvider('email');
+    toast.info('Verifying credentials...');
+
+    setTimeout(() => {
+      toast.success('Signed in successfully!');
+      router.push(ROUTES.dashboard);
+    }, 1000);
   };
 
   return (
@@ -31,16 +52,29 @@ export default function SignInPage() {
 
       <div className="space-y-3 mb-6">
         <button
-          onClick={() => router.push(ROUTES.dashboard)}
-          className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+          onClick={() => handleSocialAuth('github')}
+          disabled={loadingProvider !== null}
+          className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          <Code className="h-4 w-4" /> Continue with GitHub
+          {loadingProvider === 'github' ? (
+            <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+          ) : (
+            <Code className="h-4 w-4" />
+          )}
+          {loadingProvider === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
         </button>
+
         <button
-          onClick={() => router.push(ROUTES.dashboard)}
-          className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+          onClick={() => handleSocialAuth('google')}
+          disabled={loadingProvider !== null}
+          className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          <Mail className="h-4 w-4 text-rose-400" /> Continue with Google
+          {loadingProvider === 'google' ? (
+            <Loader2 className="h-4 w-4 animate-spin text-rose-400" />
+          ) : (
+            <Mail className="h-4 w-4 text-rose-400" />
+          )}
+          {loadingProvider === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
         </button>
       </div>
 
@@ -58,8 +92,9 @@ export default function SignInPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="student@university.edu"
+              placeholder="you@example.com"
               required
+              disabled={loadingProvider !== null}
               className="w-full rounded-xl bg-slate-950 border border-white/10 pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
@@ -73,18 +108,35 @@ export default function SignInPage() {
           <div className="relative">
             <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full rounded-xl bg-slate-950 border border-white/10 pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              disabled={loadingProvider !== null}
+              className="w-full rounded-xl bg-slate-950 border border-white/10 pl-10 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 transition-colors"
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
 
-        <ShimmerButton type="submit" className="w-full py-3 text-sm mt-2">
-          Sign In <ArrowRight className="h-4 w-4" />
+        <ShimmerButton type="submit" disabled={loadingProvider !== null} className="w-full py-3 text-sm mt-2">
+          {loadingProvider === 'email' ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Signing In...
+            </>
+          ) : (
+            <>
+              Sign In <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </ShimmerButton>
       </form>
 
