@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles, ArrowRight, Code, Mail, Lock, Loader2, Eye, EyeOff, AlertCircle, Copy } from 'lucide-react';
@@ -9,7 +9,7 @@ import { GlassCard, ShimmerButton } from '@/components/atoms';
 import { useAuthStore } from '@/providers/store-provider';
 import { toast } from 'sonner';
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const signInUser = useAuthStore((s) => s.signInUser);
@@ -228,5 +228,17 @@ export default function SignInPage() {
         </Link>
       </p>
     </GlassCard>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 border border-white/10 rounded-2xl bg-slate-900 text-slate-400 text-sm text-center">
+        Loading sign in...
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }
