@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff, AlertCircle, Copy } from 'lucide-react';
+import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
 import { useAuthStore } from '@/providers/store-provider';
@@ -21,6 +21,8 @@ export default function SignUpPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | 'duplicate' | null>(null);
 
+  const isPasswordValid = password.length >= 8;
+
   const handleDuplicateAccount = () => {
     setErrorMessage('');
     setLoadingProvider('duplicate');
@@ -28,8 +30,8 @@ export default function SignUpPage() {
 
     setTimeout(() => {
       const demoEmail = `demo.${Date.now()}@opportunityos.ai`;
-      registerUser({ name: 'Demo Student', email: demoEmail, password: 'demo123', provider: 'email' });
-      signInUser({ email: demoEmail, password: 'demo123', provider: 'email' });
+      registerUser({ name: 'Demo Student', email: demoEmail, password: 'demoPassword123', provider: 'email' });
+      signInUser({ email: demoEmail, password: 'demoPassword123', provider: 'email' });
       setLoadingProvider(null);
       toast.success('Logged in with Duplicate Account!');
       router.push(ROUTES.dashboard);
@@ -59,8 +61,9 @@ export default function SignUpPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+      toast.error('Password must be at least 8 characters long.');
       return;
     }
 
@@ -104,7 +107,7 @@ export default function SignUpPage() {
           {loadingProvider === 'duplicate' ? (
             <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
           ) : (
-            <Copy className="h-4 w-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+            <Code className="h-4 w-4 text-indigo-400 group-hover:scale-110 transition-transform" />
           )}
           {loadingProvider === 'duplicate' ? 'Loading Duplicate Account...' : 'Explore with Duplicate Account'}
         </button>
@@ -194,10 +197,15 @@ export default function SignUpPage() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="Minimum 8 characters"
               required
+              minLength={8}
               disabled={loadingProvider !== null}
-              className="w-full rounded-xl bg-slate-950 border border-white/10 pl-10 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className={`w-full rounded-xl bg-slate-950 border pl-10 pr-10 py-2.5 text-sm text-white focus:outline-none transition-colors ${
+                password.length > 0 && !isPasswordValid
+                  ? 'border-rose-500/60 focus:border-rose-500'
+                  : 'border-white/10 focus:border-indigo-500'
+              }`}
             />
             <button
               type="button"
@@ -208,9 +216,20 @@ export default function SignUpPage() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+
+          {/* Real-time Password Strength Indicator */}
+          <div className="mt-1.5 flex items-center justify-between text-[11px]">
+            <span className={isPasswordValid ? 'text-emerald-400 flex items-center gap-1 font-medium' : 'text-slate-400'}>
+              {isPasswordValid && <CheckCircle2 className="h-3 w-3" />}
+              Must be at least 8 characters
+            </span>
+            <span className={isPasswordValid ? 'text-emerald-400 font-mono font-bold' : 'text-slate-500 font-mono'}>
+              {password.length}/8
+            </span>
+          </div>
         </div>
 
-        <ShimmerButton type="submit" disabled={loadingProvider !== null} className="w-full py-3 text-sm mt-2">
+        <ShimmerButton type="submit" disabled={loadingProvider !== null || (password.length > 0 && !isPasswordValid)} className="w-full py-3 text-sm mt-2">
           {loadingProvider === 'email' ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" /> Registering Account...
