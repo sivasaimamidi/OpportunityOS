@@ -3,40 +3,64 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, ArrowRight, Code, Mail, User, Lock, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
+import { useAuthStore } from '@/providers/store-provider';
 import { toast } from 'sonner';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const registerUser = useAuthStore((s) => s.registerUser);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | null>(null);
 
   const handleSocialAuth = (provider: 'google' | 'github') => {
+    setErrorMessage('');
     setLoadingProvider(provider);
     toast.info(`Creating account with ${provider === 'google' ? 'Google' : 'GitHub'}...`);
 
     setTimeout(() => {
-      toast.success(`Account created with ${provider === 'google' ? 'Google' : 'GitHub'}! Welcome to ${APP_NAME}.`);
+      registerUser({ name: `${provider === 'google' ? 'Google' : 'GitHub'} Student`, email: `user@${provider}.com`, provider });
+      toast.success(`Account created with ${provider === 'google' ? 'Google' : 'GitHub'}! Logging in...`);
       router.push(ROUTES.dashboard);
     }, 1200);
   };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) return;
+    setErrorMessage('');
+
+    if (!name || !email || !password) {
+      setErrorMessage('Please fill in all fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
 
     setLoadingProvider('email');
-    toast.info('Creating your account...');
 
     setTimeout(() => {
-      toast.success(`Account created successfully! Welcome, ${name}.`);
-      router.push(ROUTES.dashboard);
-    }, 1000);
+      const res = registerUser({ name, email, password, provider: 'email' });
+      setLoadingProvider(null);
+
+      if (!res.success) {
+        setErrorMessage(res.error || 'Registration failed.');
+        toast.error(res.error || 'Registration failed.');
+        return;
+      }
+
+      toast.success(`Account created for ${name}! Please sign in now.`);
+      router.push(ROUTES.signIn);
+    }, 900);
   };
 
   return (
@@ -48,11 +72,12 @@ export default function SignUpPage() {
           </div>
         </div>
         <h1 className="text-2xl font-bold text-white font-heading">Create your Account</h1>
-        <p className="text-xs text-slate-400 mt-1">Get started with {APP_NAME} AI free</p>
+        <p className="text-xs text-slate-400 mt-1">Sign up first to get access to {APP_NAME} AI</p>
       </div>
 
       <div className="space-y-3 mb-6">
         <button
+          type="button"
           onClick={() => handleSocialAuth('github')}
           disabled={loadingProvider !== null}
           className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -66,6 +91,7 @@ export default function SignUpPage() {
         </button>
 
         <button
+          type="button"
           onClick={() => handleSocialAuth('google')}
           disabled={loadingProvider !== null}
           className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -83,6 +109,13 @@ export default function SignUpPage() {
         <div className="border-t border-white/10 w-full" />
         <span className="bg-slate-900 px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider absolute">OR</span>
       </div>
+
+      {errorMessage && (
+        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+          <div>{errorMessage}</div>
+        </div>
+      )}
 
       <form onSubmit={handleSignUp} className="space-y-4">
         <div>
@@ -125,7 +158,7 @@ export default function SignUpPage() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Must be at least 8 characters"
+              placeholder="At least 6 characters"
               required
               disabled={loadingProvider !== null}
               className="w-full rounded-xl bg-slate-950 border border-white/10 pl-10 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
@@ -144,11 +177,11 @@ export default function SignUpPage() {
         <ShimmerButton type="submit" disabled={loadingProvider !== null} className="w-full py-3 text-sm mt-2">
           {loadingProvider === 'email' ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Creating Account...
+              <Loader2 className="h-4 w-4 animate-spin" /> Registering Account...
             </>
           ) : (
             <>
-              Create Free Account <ArrowRight className="h-4 w-4" />
+              Create Account <ArrowRight className="h-4 w-4" />
             </>
           )}
         </ShimmerButton>

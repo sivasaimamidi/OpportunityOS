@@ -3,23 +3,29 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, Code, Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, ArrowRight, Code, Mail, Lock, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
+import { useAuthStore } from '@/providers/store-provider';
 import { toast } from 'sonner';
 
 export default function SignInPage() {
   const router = useRouter();
+  const signInUser = useAuthStore((s) => s.signInUser);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | null>(null);
 
   const handleSocialAuth = (provider: 'google' | 'github') => {
+    setErrorMessage('');
     setLoadingProvider(provider);
     toast.info(`Authenticating with ${provider === 'google' ? 'Google' : 'GitHub'}...`);
 
     setTimeout(() => {
+      signInUser({ email: `user@${provider}.com`, provider });
       toast.success(`Welcome back! Logged in with ${provider === 'google' ? 'Google' : 'GitHub'}.`);
       router.push(ROUTES.dashboard);
     }, 1200);
@@ -27,15 +33,28 @@ export default function SignInPage() {
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    setErrorMessage('');
+
+    if (!email || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
 
     setLoadingProvider('email');
-    toast.info('Verifying credentials...');
 
     setTimeout(() => {
+      const res = signInUser({ email, password, provider: 'email' });
+      setLoadingProvider(null);
+
+      if (!res.success) {
+        setErrorMessage(res.error || 'Invalid credentials.');
+        toast.error(res.error || 'Invalid credentials.');
+        return;
+      }
+
       toast.success('Signed in successfully!');
       router.push(ROUTES.dashboard);
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -52,6 +71,7 @@ export default function SignInPage() {
 
       <div className="space-y-3 mb-6">
         <button
+          type="button"
           onClick={() => handleSocialAuth('github')}
           disabled={loadingProvider !== null}
           className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -65,6 +85,7 @@ export default function SignInPage() {
         </button>
 
         <button
+          type="button"
           onClick={() => handleSocialAuth('google')}
           disabled={loadingProvider !== null}
           className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 text-slate-200 text-sm font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -82,6 +103,13 @@ export default function SignInPage() {
         <div className="border-t border-white/10 w-full" />
         <span className="bg-slate-900 px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider absolute">OR</span>
       </div>
+
+      {errorMessage && (
+        <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+          <div>{errorMessage}</div>
+        </div>
+      )}
 
       <form onSubmit={handleSignIn} className="space-y-4">
         <div>
@@ -130,7 +158,7 @@ export default function SignInPage() {
         <ShimmerButton type="submit" disabled={loadingProvider !== null} className="w-full py-3 text-sm mt-2">
           {loadingProvider === 'email' ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Signing In...
+              <Loader2 className="h-4 w-4 animate-spin" /> Verifying Credentials...
             </>
           ) : (
             <>

@@ -10,9 +10,108 @@ import type {
   AppNotification,
   AIChatMessage,
   AppSettings,
+  UserProfile,
 } from '@/types';
-import { mockOpportunities, mockNotifications } from '@/services/mock-data';
+import { mockOpportunities, mockNotifications, mockUser } from '@/services/mock-data';
 import { generateId } from '@/lib/utils';
+
+// ---- Auth Store ----
+
+export interface RegisteredUser {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  provider?: 'email' | 'google' | 'github';
+  createdAt: string;
+}
+
+export interface AuthState {
+  users: RegisteredUser[];
+  currentUser: RegisteredUser | null;
+  isAuthenticated: boolean;
+  registerUser: (user: { name: string; email: string; password?: string; provider?: 'email' | 'google' | 'github' }) => { success: boolean; error?: string };
+  signInUser: (credentials: { email: string; password?: string; provider?: 'email' | 'google' | 'github' }) => { success: boolean; error?: string };
+  signOut: () => void;
+}
+
+const defaultRegisteredUsers: RegisteredUser[] = [];
+
+export const createAuthStore = () =>
+  createStore<AuthState>()((set, get) => ({
+    users: defaultRegisteredUsers,
+    currentUser: null,
+    isAuthenticated: false,
+
+    registerUser: ({ name, email, password, provider = 'email' }) => {
+      const normalizedEmail = email.toLowerCase().trim();
+      const existing = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+      if (existing) {
+        return { success: false, error: 'An account with this email already exists. Please sign in.' };
+      }
+
+      const newUser: RegisteredUser = {
+        id: generateId(),
+        name,
+        email: normalizedEmail,
+        password,
+        provider,
+        createdAt: new Date().toISOString(),
+      };
+
+      set((s) => ({
+        users: [...s.users, newUser],
+        currentUser: newUser,
+        isAuthenticated: true,
+      }));
+
+      return { success: true };
+    },
+
+    signInUser: ({ email, password, provider = 'email' }) => {
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Social provider auto-registers or authenticates
+      if (provider !== 'email') {
+        let user = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
+        if (!user) {
+          user = {
+            id: generateId(),
+            name: provider === 'google' ? 'Google User' : 'GitHub User',
+            email: normalizedEmail,
+            provider,
+            createdAt: new Date().toISOString(),
+          };
+          set((s) => ({ users: [...s.users, user!] }));
+        }
+        set({ currentUser: user, isAuthenticated: true });
+        return { success: true };
+      }
+
+      // Email + Password verification
+      const user = get().users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+      if (!user) {
+        return {
+          success: false,
+          error: 'No account found with this email. Please sign up first.',
+        };
+      }
+
+      if (user.password && password && user.password !== password) {
+        return {
+          success: false,
+          error: 'Incorrect password. Please try again.',
+        };
+      }
+
+      set({ currentUser: user, isAuthenticated: true });
+      return { success: true };
+    },
+
+    signOut: () => set({ currentUser: null, isAuthenticated: false }),
+  }));
 
 // ---- App Store ----
 
