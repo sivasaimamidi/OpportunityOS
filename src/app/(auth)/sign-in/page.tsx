@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles, ArrowRight, Code, Mail, Lock, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { APP_NAME, ROUTES } from '@/lib/constants';
 import { GlassCard, ShimmerButton } from '@/components/atoms';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const signInUser = useAuthStore((s) => s.signInUser);
 
   const [email, setEmail] = useState('');
@@ -19,13 +20,29 @@ export default function SignInPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'github' | 'email' | null>(null);
 
+  useEffect(() => {
+    const prefillEmail = searchParams.get('email');
+    if (prefillEmail) {
+      setEmail(prefillEmail);
+      toast.success('Account created! Enter your password to sign in.');
+    }
+  }, [searchParams]);
+
   const handleSocialAuth = (provider: 'google' | 'github') => {
     setErrorMessage('');
     setLoadingProvider(provider);
     toast.info(`Authenticating with ${provider === 'google' ? 'Google' : 'GitHub'}...`);
 
     setTimeout(() => {
-      signInUser({ email: `user@${provider}.com`, provider });
+      const res = signInUser({ email: `user@${provider}.com`, provider });
+      setLoadingProvider(null);
+
+      if (!res.success) {
+        setErrorMessage(res.error || 'Authentication failed. Please sign up first.');
+        toast.error(res.error || 'Authentication failed. Please sign up first.');
+        return;
+      }
+
       toast.success(`Welcome back! Logged in with ${provider === 'google' ? 'Google' : 'GitHub'}.`);
       router.push(ROUTES.dashboard);
     }, 1200);

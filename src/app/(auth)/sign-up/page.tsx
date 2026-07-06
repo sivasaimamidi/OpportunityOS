@@ -26,9 +26,11 @@ export default function SignUpPage() {
     toast.info(`Creating account with ${provider === 'google' ? 'Google' : 'GitHub'}...`);
 
     setTimeout(() => {
-      registerUser({ name: `${provider === 'google' ? 'Google' : 'GitHub'} Student`, email: `user@${provider}.com`, provider });
-      toast.success(`Account created with ${provider === 'google' ? 'Google' : 'GitHub'}! Logging in...`);
-      router.push(ROUTES.dashboard);
+      const socialEmail = `user@${provider}.com`;
+      registerUser({ name: `${provider === 'google' ? 'Google' : 'GitHub'} Student`, email: socialEmail, provider });
+      setLoadingProvider(null);
+      toast.success(`Account created via ${provider === 'google' ? 'Google' : 'GitHub'}! Now sign in with your account.`);
+      router.push(`${ROUTES.signIn}?email=${encodeURIComponent(socialEmail)}`);
     }, 1200);
   };
 
@@ -58,9 +60,9 @@ export default function SignUpPage() {
         return;
       }
 
-      toast.success(`Account created for ${name}! Please sign in now.`);
-      router.push(ROUTES.signIn);
-    }, 900);
+      toast.success(`Account created for ${name}! Please sign in to continue.`);
+      router.push(`${ROUTES.signIn}?email=${encodeURIComponent(email)}`);
+    }, 1000);
   };
 
   return (
