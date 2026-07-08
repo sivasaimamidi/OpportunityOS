@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, MouseEvent } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 
@@ -138,7 +138,7 @@ export function ShimmerButton({
 }
 
 // ---- StatusBadge ----
-export function StatusBadge({ urgency }: { urgency?: string }) {
+export function StatusBadge({ urgency, days, deadline }: { urgency?: string; days?: number; deadline?: string }) {
   const styles: Record<string, { label: string; bg: string; text: string; dot: string }> = {
     relaxed: { label: '30+ Days', bg: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-400', dot: 'bg-emerald-400' },
     upcoming: { label: '15 Days', bg: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' },
@@ -147,12 +147,56 @@ export function StatusBadge({ urgency }: { urgency?: string }) {
     critical: { label: '24 Hours', bg: 'bg-red-500/20 border-red-500/40', text: 'text-red-300', dot: 'bg-red-500 animate-ping' },
   };
 
+  const [timeLeft, setTimeLeft] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deadline) return;
+
+    const calculateTimeLeft = () => {
+      const targetTime = new Date(deadline).getTime();
+      const now = Date.now();
+      const diffMs = targetTime - now;
+
+      if (diffMs > 0 && diffMs < 86400000) {
+        const hours = Math.floor(diffMs / 3600000);
+        const minutes = Math.floor((diffMs % 3600000) / 60000);
+        const seconds = Math.floor((diffMs % 60000) / 1000);
+        return `${hours}h ${minutes}m ${seconds}s`;
+      }
+      if (diffMs <= 0 && diffMs > -7200000) {
+        return 'Ending...';
+      }
+      return null;
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const interval = setInterval(() => {
+      const formatted = calculateTimeLeft();
+      setTimeLeft(formatted);
+      if (formatted === null) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [deadline]);
+
   const current = styles[urgency || 'relaxed'] || styles.relaxed;
+  const displayLabel = timeLeft 
+    ? timeLeft
+    : (days !== undefined 
+        ? (days === 0 ? 'Today' : days === 1 ? '24 Hours' : `${days} Days`)
+        : current.label);
+
+  const displayBg = timeLeft ? styles.critical.bg : current.bg;
+  const displayText = timeLeft ? styles.critical.text : current.text;
+  const displayDot = timeLeft ? styles.critical.dot : current.dot;
 
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold', current.bg, current.text)}>
-      <span className={cn('h-1.5 w-1.5 rounded-full', current.dot)} />
-      {current.label}
+    <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tabular-nums', displayBg, displayText)}>
+      <span className={cn('h-1.5 w-1.5 rounded-full', displayDot)} />
+      {displayLabel}
     </span>
   );
 }

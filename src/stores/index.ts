@@ -13,7 +13,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { mockOpportunities, mockNotifications, mockUser } from '@/services/mock-data';
-import { generateId } from '@/lib/utils';
+import { generateId, getUrgencyLevel } from '@/lib/utils';
 
 // ---- Auth Store ----
 
@@ -137,6 +137,12 @@ export interface AppState {
   // Quick add
   quickAddOpen: boolean;
   setQuickAddOpen: (open: boolean) => void;
+
+  // Daily Streak
+  currentStreak: number;
+  longestStreak: number;
+  hasCheckedInToday: boolean;
+  checkIn: () => void;
 }
 
 export const createAppStore = () =>
@@ -157,7 +163,23 @@ export const createAppStore = () =>
 
     quickAddOpen: false,
     setQuickAddOpen: (open) => set({ quickAddOpen: open }),
+
+    currentStreak: 7,
+    longestStreak: 14,
+    hasCheckedInToday: false,
+    checkIn: () =>
+      set((s) => {
+        if (s.hasCheckedInToday) return {};
+        const newStreak = s.currentStreak + 1;
+        const newLongest = newStreak > s.longestStreak ? newStreak : s.longestStreak;
+        return {
+          currentStreak: newStreak,
+          longestStreak: newLongest,
+          hasCheckedInToday: true,
+        };
+      }),
   }));
+
 
 // ---- Opportunity Store ----
 
@@ -200,23 +222,39 @@ export const createOpportunityStore = () =>
     selectOpportunity: (id) => set({ selectedId: id }),
 
     addOpportunity: (opp) =>
-      set((s) => ({
-        opportunities: [
-          {
-            ...opp,
-            id: generateId(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          } as Opportunity,
-          ...s.opportunities,
-        ],
-      })),
+      set((s) => {
+        const daysUntilDeadline = opp.deadline
+          ? Math.max(0, Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000))
+          : undefined;
+        const urgency = opp.deadline ? getUrgencyLevel(opp.deadline) : undefined;
+        return {
+          opportunities: [
+            {
+              ...opp,
+              id: generateId(),
+              daysUntilDeadline,
+              urgency,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            } as Opportunity,
+            ...s.opportunities,
+          ],
+        };
+      }),
 
     updateOpportunity: (id, updates) =>
       set((s) => ({
-        opportunities: s.opportunities.map((o) =>
-          o.id === id ? { ...o, ...updates, updatedAt: new Date().toISOString() } : o
-        ),
+        opportunities: s.opportunities.map((o) => {
+          if (o.id !== id) return o;
+          const merged = { ...o, ...updates };
+          if (updates.deadline !== undefined) {
+            merged.daysUntilDeadline = updates.deadline
+              ? Math.max(0, Math.ceil((new Date(updates.deadline).getTime() - Date.now()) / 86400000))
+              : undefined;
+            merged.urgency = updates.deadline ? getUrgencyLevel(updates.deadline) : undefined;
+          }
+          return { ...merged, updatedAt: new Date().toISOString() };
+        }),
       })),
 
     deleteOpportunity: (id) =>

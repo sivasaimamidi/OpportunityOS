@@ -16,6 +16,7 @@ import {
   Plus,
   Link2,
   LogOut,
+  FileText,
 } from 'lucide-react';
 import { APP_NAME, NAV_ITEMS } from '@/lib/constants';
 import { useAppStore } from '@/providers/store-provider';
@@ -30,7 +31,9 @@ const iconMap: Record<string, React.ElementType> = {
   BarChart3,
   Bot,
   Settings,
+  FileText,
 };
+
 
 export function Sidebar() {
   const pathname = usePathname();

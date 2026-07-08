@@ -14,8 +14,14 @@ export function OpportunityDetailPanel({ opportunity, onClose }: { opportunity: 
   if (!opportunity) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-slate-900 border-l border-white/10 h-full overflow-y-auto p-6 space-y-6">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm cursor-pointer"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-slate-900 border-l border-white/10 h-full overflow-y-auto p-6 space-y-6 cursor-default"
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <span className="px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase">
@@ -40,25 +46,45 @@ export function OpportunityDetailPanel({ opportunity, onClose }: { opportunity: 
         {/* Title & Info */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">{opportunity.title}</h2>
-          <p className="text-sm text-slate-400 mb-4">{opportunity.organization} • {opportunity.location || 'Remote'}</p>
+          <p className="text-sm text-slate-400 mb-2">{opportunity.organization} • {opportunity.location || 'Remote'}</p>
 
           {opportunity.url && (
             <a
               href={opportunity.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:underline mb-4"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:underline mb-3"
             >
               Visit Opportunity Website <ExternalLink className="h-3.5 w-3.5" />
             </a>
+          )}
+
+          {opportunity.description && (
+            <p className="text-xs text-slate-300 leading-relaxed font-sans mt-2 whitespace-pre-wrap">{opportunity.description}</p>
           )}
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
           <div>
-            <div className="text-[11px] text-slate-400">Deadline</div>
-            <div className="text-sm font-bold text-white">{opportunity.daysUntilDeadline !== undefined ? `${opportunity.daysUntilDeadline} Days` : 'N/A'}</div>
+            <div className="text-[11px] text-slate-400 mb-0.5">Deadline</div>
+            <div className="text-sm font-bold text-white mb-0.5">
+              {opportunity.daysUntilDeadline !== undefined ? `${opportunity.daysUntilDeadline} Days` : 'N/A'}
+            </div>
+            {opportunity.deadline && (
+              <div className="text-[10px] text-indigo-300 leading-tight">
+                {new Date(opportunity.deadline).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+                <br />
+                {new Date(opportunity.deadline).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            )}
           </div>
           <div>
             <div className="text-[11px] text-slate-400">Priority Score</div>

@@ -65,7 +65,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-screen bg-background antialiased">
+      <body className="min-h-screen bg-background antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <QueryProvider>
             <StoreProvider>

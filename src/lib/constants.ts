@@ -16,6 +16,7 @@ export const ROUTES = {
   calendar: '/calendar',
   analytics: '/analytics',
   aiAdvisor: '/ai-advisor',
+  atsScanner: '/ats-scanner',
   settings: '/settings',
 } as const;
 
@@ -25,8 +26,10 @@ export const NAV_ITEMS = [
   { label: 'Calendar', href: ROUTES.calendar, icon: 'CalendarDays' },
   { label: 'Analytics', href: ROUTES.analytics, icon: 'BarChart3' },
   { label: 'AI Advisor', href: ROUTES.aiAdvisor, icon: 'Bot' },
+  { label: 'ATS Auditor', href: ROUTES.atsScanner, icon: 'FileText' },
   { label: 'Settings', href: ROUTES.settings, icon: 'Settings' },
 ] as const;
+
 
 export const URGENCY_CONFIG = {
   relaxed: { label: '30+ Days', color: 'emerald', threshold: 30 },

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/shared/sidebar';
 import { Topbar } from '@/components/shared/topbar';
 import { ImportModal } from '@/components/opportunities/import-modal';
+import { NotificationPanel } from '@/components/shared/notification-panel';
+import { CommandMenu } from '@/components/shared/command-menu';
 import { useAuthStore } from '@/providers/store-provider';
 import { ROUTES } from '@/lib/constants';
 import { toast } from 'sonner';
@@ -36,6 +38,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">{children}</main>
       </div>
       <ImportModal />
+      <NotificationPanel />
+      <CommandMenu />
     </div>
   );
 }
+
