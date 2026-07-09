@@ -66,7 +66,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-16 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-20 px-6 flex items-center justify-between">
+    <header className="h-16 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-20 px-4 md:px-6 flex items-center justify-between">
       {/* Page Title / Breadcrumb */}
       <div className="flex items-center gap-3">
         <button
@@ -80,7 +80,7 @@ export function Topbar() {
       </div>
 
       {/* Command Search & Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         {/* Search */}
         <button
           onClick={() => setCommandOpen(true)}
@@ -102,7 +102,7 @@ export function Topbar() {
         {/* Theme Toggle */}
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="h-9 w-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          className="hidden sm:flex h-9 w-9 rounded-xl bg-slate-900 border border-white/10 items-center justify-center text-slate-400 hover:text-white transition-colors"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
         </button>
@@ -110,13 +110,14 @@ export function Topbar() {
         {/* Daily Streak Mode */}
         <Popover>
           <PopoverTrigger>
-            <div className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border font-semibold font-mono text-xs cursor-pointer select-none transition-all shadow-sm ${
+            <div className={`flex items-center gap-1.5 h-9 px-2 sm:px-3 rounded-xl border font-semibold font-mono text-xs cursor-pointer select-none transition-all shadow-sm ${
               hasCheckedInToday 
                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' 
                 : 'bg-slate-900 border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-500/30'
             }`}>
               <Flame className={`h-4 w-4 transition-transform ${hasCheckedInToday ? 'fill-rose-500 text-rose-500 scale-110' : 'text-slate-400 group-hover:text-rose-500'}`} />
-              <span>{currentStreak} Days</span>
+              <span className="hidden sm:inline">{currentStreak} Days</span>
+              <span className="inline sm:hidden font-mono">{currentStreak}</span>
             </div>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 bg-slate-900 border border-white/10 text-slate-200 p-4 rounded-xl shadow-2xl flex flex-col gap-3">
@@ -178,7 +179,7 @@ export function Topbar() {
         </button>
         <button
           onClick={() => setImportModalOpen(true)}
-          className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-600/20"
+          className="hidden sm:flex md:hidden h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-600/20"
           title="Import Opportunity"
         >
           <Plus className="h-4 w-4" />
