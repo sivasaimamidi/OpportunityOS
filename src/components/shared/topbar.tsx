@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bell, Moon, Sun, Plus, LogOut, Settings as SettingsIcon, Flame, Trophy } from 'lucide-react';
+import { Search, Bell, Moon, Sun, Plus, LogOut, Settings as SettingsIcon, Flame, Trophy, Menu } from 'lucide-react';
 import { useAppStore, useNotificationStore } from '@/providers/store-provider';
 import { useTheme } from 'next-themes';
 import { mockUser } from '@/services/mock-data';
@@ -29,6 +29,7 @@ export function Topbar() {
   const setNotificationPanelOpen = useAppStore((s) => s.setNotificationPanelOpen);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const { theme, setTheme } = useTheme();
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
 
   // Streak states
   const currentStreak = useAppStore((s) => s.currentStreak);
@@ -67,20 +68,35 @@ export function Topbar() {
   return (
     <header className="h-16 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-20 px-6 flex items-center justify-between">
       {/* Page Title / Breadcrumb */}
-      <div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggleSidebar}
+          className="md:hidden p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition-colors"
+          title="Toggle Navigation"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
         <h1 className="text-lg font-bold text-white font-heading">{pageTitle}</h1>
       </div>
 
       {/* Command Search & Actions */}
       <div className="flex items-center gap-3">
+        {/* Search */}
         <button
           onClick={() => setCommandOpen(true)}
-          className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-400 text-xs hover:border-indigo-500/50 transition-colors w-64 justify-between"
+          className="hidden md:flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-400 text-xs hover:border-indigo-500/50 transition-colors w-64 justify-between"
         >
           <span className="flex items-center gap-2">
             <Search className="h-3.5 w-3.5" /> Search opportunities...
           </span>
           <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-400 border border-slate-700">⌘K</kbd>
+        </button>
+        <button
+          onClick={() => setCommandOpen(true)}
+          className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition-colors"
+          title="Search"
+        >
+          <Search className="h-4 w-4" />
         </button>
 
         {/* Theme Toggle */}
@@ -156,9 +172,16 @@ export function Topbar() {
         {/* Quick Add Button */}
         <button
           onClick={() => setImportModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors shadow-lg shadow-indigo-600/20"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors shadow-lg shadow-indigo-600/20"
         >
           <Plus className="h-3.5 w-3.5" /> Import Opportunity
+        </button>
+        <button
+          onClick={() => setImportModalOpen(true)}
+          className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-600/20"
+          title="Import Opportunity"
+        >
+          <Plus className="h-4 w-4" />
         </button>
 
         {/* User Menu / Sign Out Dropdown */}

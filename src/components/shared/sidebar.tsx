@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -41,6 +41,22 @@ export function Sidebar() {
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
   const setSidebarCollapsed = useAppStore((s) => s.setSidebarCollapsed);
   const setImportModalOpen = useAppStore((s) => s.setImportModalOpen);
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
+
+  useEffect(() => {
+    // Close sidebar on mobile by default
+    if (window.innerWidth < 768 && sidebarOpen) {
+      toggleSidebar();
+    }
+  }, []);
+
+  useEffect(() => {
+    // Auto-close sidebar on navigation on mobile
+    if (window.innerWidth < 768 && sidebarOpen) {
+      toggleSidebar();
+    }
+  }, [pathname]);
 
   const handleSignOut = () => {
     toast.success('Signed out successfully');
@@ -48,12 +64,20 @@ export function Sidebar() {
   };
 
   return (
-    <aside
-      className={cn(
-        'relative z-30 flex flex-col border-r border-white/10 bg-slate-950/80 backdrop-blur-2xl transition-all duration-300 select-none h-screen sticky top-0',
-        sidebarCollapsed ? 'w-20' : 'w-64'
+    <>
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+          onClick={toggleSidebar}
+        />
       )}
-    >
+      <aside
+        className={cn(
+          'fixed md:sticky top-0 left-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-slate-950/90 backdrop-blur-2xl transition-all duration-300 select-none h-screen',
+          sidebarCollapsed ? 'w-20' : 'w-64',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
+      >
       {/* Brand Header */}
       <div className="flex h-16 items-center justify-between px-5 border-b border-white/10">
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
@@ -138,6 +162,7 @@ export function Sidebar() {
           <LogOut className="h-4 w-4" />
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
